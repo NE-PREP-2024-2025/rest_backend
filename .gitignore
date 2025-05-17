@@ -1,0 +1,12 @@
+e_commerce/node_modules
+e_commerce/dist
+e_commerce/build
+e_commerce/coverage
+e_commerce/.env
+
+pms/node_modules
+pms/dist
+pms/build
+pms/coverage
+pms/node_modules
+pms/.env

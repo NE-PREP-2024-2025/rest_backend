@@ -1,0 +1,83 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+enum Role {
+  STUDENT
+  ADMIN
+  @@map(name: "role")
+}
+
+enum OrderStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+  @@map(name: "order_status")
+}
+
+model User{
+  id  String @id @default(uuid())
+  firstName String
+  lastName String
+  email String @unique
+  password String
+  createdAt DateTime @default(now())
+  updatedAt DateTime  @default(now())
+  role Role @default(STUDENT)
+  products Product[] @relation("UserProducts")
+  @@map("users")
+  emailVerified Boolean @default(false)
+  emailVerificationToken String?
+  emailVerificationTokenExpires DateTime?
+  resetPasswordToken String?
+  resetPasswordTokenExpires DateTime?
+  orders Order[] @relation("UserOrders")
+}
+
+
+model Product{
+  id String @id @default(uuid())
+  name String
+  price Int
+  category String
+  quantity Int
+  user User @relation(fields: [userId], references: [id], name: "UserProducts")
+  userId String
+  description String
+  createdAt DateTime @default(now())
+  updatedAt DateTime  @default(now())
+  @@map("products")
+  orderItems OrderItem[]
+}
+
+model Order{
+  id String @id @default(uuid())
+  amount Int
+  status OrderStatus @default(PENDING)
+  userId String
+  user User @relation(fields: [userId], references: [id], name: "UserOrders")
+  orderItems OrderItem[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime  @default(now())
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  order     Order    @relation(fields: [orderId], references: [id])
+  orderId   String
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String
+  quantity  Int
+}

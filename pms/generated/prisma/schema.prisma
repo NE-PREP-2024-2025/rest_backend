@@ -1,0 +1,118 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+
+  @@map(name: "role")
+}
+
+enum SlotStatus {
+  AVAILABLE
+  OCCUPIED
+  MAINTENANCE
+  RESERVED
+
+  @@map(name: "slot_status")
+}
+
+enum VehicleType {
+  CAR
+  BIKE
+  TRUCK
+  BUS
+
+  @@map(name: "vehicle_type")
+}
+
+enum SlotSize {
+  SMALL
+  MEDIUM
+  LARGE
+
+  @@map(name: "slot_size")
+}
+
+enum SlotOrderStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+
+  @@map(name: "slot_order_status")
+}
+
+model User {
+  id                            String      @id @default(uuid())
+  firstName                     String
+  lastName                      String
+  email                         String      @unique
+  password                      String
+  createdAt                     DateTime    @default(now())
+  updatedAt                     DateTime    @default(now())
+  role                          Role        @default(CUSTOMER)
+  emailVerified                 Boolean     @default(false)
+  emailVerificationToken        String?
+  emailVerificationTokenExpires DateTime?
+  resetPasswordToken            String?
+  resetPasswordTokenExpires     DateTime?
+  vehicles                      Vehicle[]
+  slotOrders                    SlotOrder[]
+
+  @@map("users")
+}
+
+model Vehicle {
+  id                 String      @id @default(uuid())
+  vehiclePlateNumber String      @unique
+  vehicleType        VehicleType @default(CAR)
+  vehicleColor       String
+  vehicleBrand       String
+  vehicleModel       String
+  vehicleYear        Int
+  vehicleOwnerId     String
+  vehicleOwner       User        @relation(fields: [vehicleOwnerId], references: [id], onDelete: Cascade)
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @default(now())
+  slotOrder          SlotOrder[]
+}
+
+model Slot {
+  id         String      @id @default(uuid())
+  slotNumber String
+  slotSize   SlotSize    @default(SMALL)
+  slotStatus SlotStatus  @default(AVAILABLE)
+  createdAt  DateTime    @default(now())
+  slotOrders SlotOrder[]
+  updatedAt  DateTime    @default(now())
+}
+
+model SlotOrder {
+  id             String   @id @default(uuid())
+  slotId         String
+  slot           Slot     @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  vehicleId      String
+  createdAt      DateTime @default(now())
+  slotCustomerId String?
+  slotCustomer   User?    @relation(fields: [slotCustomerId], references: [id], onDelete: Cascade)
+  slotVehicleId  String?
+  pricePerHour   Int
+  hours          Int
+
+  slotVehicle     Vehicle?        @relation(fields: [slotVehicleId], references: [id], onDelete: Cascade)
+  updatedAt       DateTime        @default(now())
+  slotOrderStatus SlotOrderStatus @default(PENDING)
+}
